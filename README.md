@@ -1,4 +1,7 @@
+![Azure Observability Stack](docs/screenshots/social-preview.png)
+
 # Azure Observability Stack
+
 
 Production-ready monitoring and observability stack for cloud infrastructure, built with Docker Compose.
 
