@@ -66,6 +66,7 @@ docker compose ps
 |---------------|------------------------|--------------------------|
 | Prometheus    | http://localhost:9090   | Metrics & query engine   |
 | Grafana       | http://localhost:3000   | Dashboards & visualization |
+| Loki          | http://localhost:3100   | Log aggregation API      |
 | Node Exporter | http://localhost:9100   | Host metrics (internal)  |
 
 ## Grafana
@@ -80,6 +81,31 @@ Default credentials:
 - **Linux System Dashboard** — CPU, memory, disk I/O, network, and filesystem metrics from Node Exporter
 
 Dashboards are auto-provisioned on startup via the `grafana/provisioning/` directory. To add new dashboards, place JSON files in `grafana/dashboards/` and they will load automatically.
+
+### Datasources
+
+Both Prometheus and Loki are auto-provisioned as Grafana datasources. No manual configuration needed after startup.
+
+## Centralized Logging
+
+The stack uses **Loki** for log aggregation and **Promtail** as the log collector.
+
+### How It Works
+
+1. **Promtail** discovers running Docker containers via the Docker socket
+2. Container logs are scraped from `/var/lib/docker/containers/`
+3. System logs are collected from `/var/log/*.log`
+4. All logs are pushed to **Loki** for indexing and querying
+5. **Grafana** queries Loki to visualize and search logs
+
+### Querying Logs in Grafana
+
+Navigate to **Explore** in Grafana, select the **Loki** datasource, and use LogQL:
+
+```logql
+{job="docker"} |= "error"
+{container="prometheus"} | logfmt | level="error"
+```
 
 ## Architecture
 
