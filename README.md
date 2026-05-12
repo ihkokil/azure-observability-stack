@@ -91,11 +91,17 @@ Default credentials:
 
 - **Linux System Dashboard** — CPU, memory, disk I/O, network, and filesystem metrics from Node Exporter
 
+![Linux System Dashboard](docs/screenshots/dashboard_prometheus.png)
+
+
 Dashboards are auto-provisioned on startup. To add new dashboards, drop JSON files into `grafana/dashboards/`.
 
 ### Datasources
 
 Both Prometheus and Loki are auto-provisioned as Grafana datasources on first boot.
+
+![Grafana Datasources](docs/screenshots/data_sources.png)
+
 
 ## Centralized Logging
 
@@ -111,6 +117,9 @@ The stack uses **Loki** for log aggregation and **Promtail** as the log collecto
 {container="prometheus"} | logfmt | level="error"
 ```
 
+![Loki Logs Dashboard](docs/screenshots/dashboard_loki.png)
+
+
 ## Alerting
 
 Alerts are evaluated by Prometheus and routed through Alertmanager to Microsoft Teams.
@@ -122,6 +131,9 @@ Alerts are evaluated by Prometheus and routed through Alertmanager to Microsoft 
 | HighCPUUsage     | CPU usage > 80%          | warning  | 5m       |
 | HighMemoryUsage  | Memory usage > 85%       | warning  | 5m       |
 | HostDown         | Target unreachable       | critical | 2m       |
+
+![Prometheus Alert Rules](docs/screenshots/alert_rules.png)
+
 
 ### Microsoft Teams Setup
 
