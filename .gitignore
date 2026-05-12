@@ -1,0 +1,15 @@
+# Data volumes
+prometheus/data/
+grafana/data/
+loki/data/
+alertmanager/data/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Reference material
+docker-monitoring/
