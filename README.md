@@ -16,7 +16,9 @@ Production-ready monitoring and observability stack for cloud infrastructure, bu
 ```
 azure-observability-stack/
 ├── prometheus/          # Prometheus configuration
-├── grafana/             # Grafana dashboards and provisioning
+├── grafana/
+│   ├── dashboards/      # Dashboard JSON files
+│   └── provisioning/    # Datasource and dashboard provisioning
 ├── loki/                # Loki log aggregation config
 ├── promtail/            # Promtail log collector config
 ├── alertmanager/        # Alertmanager routing config
@@ -63,7 +65,21 @@ docker compose ps
 | Service       | URL                    | Description              |
 |---------------|------------------------|--------------------------|
 | Prometheus    | http://localhost:9090   | Metrics & query engine   |
+| Grafana       | http://localhost:3000   | Dashboards & visualization |
 | Node Exporter | http://localhost:9100   | Host metrics (internal)  |
+
+## Grafana
+
+Default credentials:
+
+- **Username:** `admin`
+- **Password:** `admin` (change via `GF_SECURITY_ADMIN_PASSWORD` in `.env`)
+
+### Provisioned Dashboards
+
+- **Linux System Dashboard** — CPU, memory, disk I/O, network, and filesystem metrics from Node Exporter
+
+Dashboards are auto-provisioned on startup via the `grafana/provisioning/` directory. To add new dashboards, place JSON files in `grafana/dashboards/` and they will load automatically.
 
 ## Architecture
 
