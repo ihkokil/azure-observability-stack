@@ -11,6 +11,20 @@ Production-ready monitoring and observability stack for cloud infrastructure, bu
 - **Alertmanager** — Alert routing and notifications
 - **Node Exporter** — Host-level metrics
 
+## Architecture
+
+```mermaid
+graph LR
+    NE["Node Exporter"] -->|metrics| PROM["Prometheus"]
+    PROM -->|alerts| AM["Alertmanager"]
+    AM -->|webhook| TEAMS["MS Teams"]
+    PROM -->|query| GF["Grafana"]
+    PT["Promtail"] -->|logs| LOKI["Loki"]
+    LOKI -->|query| GF
+```
+
+For a detailed architecture breakdown, see [diagrams/architecture.md](diagrams/architecture.md).
+
 ## Project Structure
 
 ```
@@ -26,6 +40,7 @@ azure-observability-stack/
 ├── alertmanager/          # Alertmanager routing config
 ├── exporters/             # Custom exporter configs
 ├── diagrams/              # Architecture diagrams
+├── docs/                  # Deployment and troubleshooting guides
 └── docker-compose.yml     # Stack orchestration
 ```
 
@@ -35,36 +50,25 @@ azure-observability-stack/
 - Docker Compose v2.0+
 - Minimum 2GB RAM available for the stack
 
-## Getting Started
-
-1. Clone the repository:
+## Quick Start
 
 ```bash
-git clone https://github.com/your-username/azure-observability-stack.git
+# Clone and enter the directory
+git clone https://github.com/ihkokil/azure-observability-stack.git
 cd azure-observability-stack
-```
 
-2. Copy the environment file and configure:
-
-```bash
+# Configure environment
 cp .env.example .env
-```
+# Edit .env with your Grafana password and Teams webhook URL
 
-Edit `.env` and set your values:
-- `GF_SECURITY_ADMIN_PASSWORD` — Grafana admin password
-- `TEAMS_WEBHOOK_URL` — Microsoft Teams incoming webhook URL
-
-3. Start the monitoring stack:
-
-```bash
+# Launch the stack
 docker compose up -d
-```
 
-4. Verify services are running:
-
-```bash
+# Verify everything is running
 docker compose ps
 ```
+
+For detailed setup instructions, see the [Deployment Guide](docs/DEPLOYMENT.md).
 
 ## Service Endpoints
 
@@ -87,27 +91,20 @@ Default credentials:
 
 - **Linux System Dashboard** — CPU, memory, disk I/O, network, and filesystem metrics from Node Exporter
 
-Dashboards are auto-provisioned on startup via the `grafana/provisioning/` directory. To add new dashboards, place JSON files in `grafana/dashboards/` and they will load automatically.
+Dashboards are auto-provisioned on startup. To add new dashboards, drop JSON files into `grafana/dashboards/`.
 
 ### Datasources
 
-Both Prometheus and Loki are auto-provisioned as Grafana datasources. No manual configuration needed after startup.
+Both Prometheus and Loki are auto-provisioned as Grafana datasources on first boot.
 
 ## Centralized Logging
 
 The stack uses **Loki** for log aggregation and **Promtail** as the log collector.
 
-### How It Works
-
-1. **Promtail** discovers running Docker containers via the Docker socket
-2. Container logs are scraped from `/var/lib/docker/containers/`
-3. System logs are collected from `/var/log/*.log`
-4. All logs are pushed to **Loki** for indexing and querying
-5. **Grafana** queries Loki to visualize and search logs
-
-### Querying Logs in Grafana
-
-Navigate to **Explore** in Grafana, select the **Loki** datasource, and use LogQL:
+- Promtail discovers Docker containers via the Docker socket
+- Container logs are scraped from `/var/lib/docker/containers/`
+- System logs are collected from `/var/log/*.log`
+- Query logs in Grafana using LogQL:
 
 ```logql
 {job="docker"} |= "error"
@@ -116,7 +113,7 @@ Navigate to **Explore** in Grafana, select the **Loki** datasource, and use LogQ
 
 ## Alerting
 
-Alerts are managed through **Prometheus** alert rules and routed via **Alertmanager** to Microsoft Teams.
+Alerts are evaluated by Prometheus and routed through Alertmanager to Microsoft Teams.
 
 ### Configured Alert Rules
 
@@ -126,29 +123,34 @@ Alerts are managed through **Prometheus** alert rules and routed via **Alertmana
 | HighMemoryUsage  | Memory usage > 85%       | warning  | 5m       |
 | HostDown         | Target unreachable       | critical | 2m       |
 
-### Microsoft Teams Integration
+### Microsoft Teams Setup
 
 1. Create an **Incoming Webhook** connector in your Teams channel
-2. Copy the webhook URL
-3. Set it in your `.env` file:
+2. Set the webhook URL in `.env`:
 
 ```
 TEAMS_WEBHOOK_URL=https://outlook.office.com/webhook/your-actual-url
 ```
 
-4. Restart the stack:
+3. Restart: `docker compose restart alertmanager`
+
+## Troubleshooting
+
+Common issues and solutions are documented in the [Deployment Guide](docs/DEPLOYMENT.md#troubleshooting).
+
+Quick checks:
 
 ```bash
-docker compose restart alertmanager
+# View logs for a specific service
+docker compose logs <service-name>
+
+# Validate Prometheus config
+docker exec prometheus promtool check config /etc/prometheus/prometheus.yml
+
+# Check Prometheus targets
+curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[] | {job: .labels.job, health: .health}'
 ```
 
-Alerts will be sent to your Teams channel when triggered and when resolved.
+## License
 
-### Checking Alert Status
-
-- **Prometheus Alerts:** http://localhost:9090/alerts
-- **Alertmanager UI:** http://localhost:9093
-
-## Architecture
-
-> Coming soon — architecture diagram will be added.
+This project is provided as-is for educational and production use.
