@@ -15,16 +15,18 @@ Production-ready monitoring and observability stack for cloud infrastructure, bu
 
 ```
 azure-observability-stack/
-├── prometheus/          # Prometheus configuration
+├── prometheus/
+│   ├── prometheus.yml     # Scrape configuration
+│   └── alert-rules.yml    # Alerting rules
 ├── grafana/
-│   ├── dashboards/      # Dashboard JSON files
-│   └── provisioning/    # Datasource and dashboard provisioning
-├── loki/                # Loki log aggregation config
-├── promtail/            # Promtail log collector config
-├── alertmanager/        # Alertmanager routing config
-├── exporters/           # Custom exporter configs
-├── diagrams/            # Architecture diagrams
-└── docker-compose.yml   # Stack orchestration
+│   ├── dashboards/        # Dashboard JSON files
+│   └── provisioning/      # Datasource and dashboard provisioning
+├── loki/                  # Loki log aggregation config
+├── promtail/              # Promtail log collector config
+├── alertmanager/          # Alertmanager routing config
+├── exporters/             # Custom exporter configs
+├── diagrams/              # Architecture diagrams
+└── docker-compose.yml     # Stack orchestration
 ```
 
 ## Prerequisites
@@ -42,11 +44,15 @@ git clone https://github.com/your-username/azure-observability-stack.git
 cd azure-observability-stack
 ```
 
-2. Copy the environment file:
+2. Copy the environment file and configure:
 
 ```bash
 cp .env.example .env
 ```
+
+Edit `.env` and set your values:
+- `GF_SECURITY_ADMIN_PASSWORD` — Grafana admin password
+- `TEAMS_WEBHOOK_URL` — Microsoft Teams incoming webhook URL
 
 3. Start the monitoring stack:
 
@@ -62,12 +68,13 @@ docker compose ps
 
 ## Service Endpoints
 
-| Service       | URL                    | Description              |
-|---------------|------------------------|--------------------------|
-| Prometheus    | http://localhost:9090   | Metrics & query engine   |
+| Service       | URL                    | Description                |
+|---------------|------------------------|----------------------------|
+| Prometheus    | http://localhost:9090   | Metrics & query engine     |
 | Grafana       | http://localhost:3000   | Dashboards & visualization |
-| Loki          | http://localhost:3100   | Log aggregation API      |
-| Node Exporter | http://localhost:9100   | Host metrics (internal)  |
+| Alertmanager  | http://localhost:9093   | Alert management UI        |
+| Loki          | http://localhost:3100   | Log aggregation API        |
+| Node Exporter | http://localhost:9100   | Host metrics (internal)    |
 
 ## Grafana
 
@@ -106,6 +113,41 @@ Navigate to **Explore** in Grafana, select the **Loki** datasource, and use LogQ
 {job="docker"} |= "error"
 {container="prometheus"} | logfmt | level="error"
 ```
+
+## Alerting
+
+Alerts are managed through **Prometheus** alert rules and routed via **Alertmanager** to Microsoft Teams.
+
+### Configured Alert Rules
+
+| Alert            | Condition                | Severity | Duration |
+|------------------|--------------------------|----------|----------|
+| HighCPUUsage     | CPU usage > 80%          | warning  | 5m       |
+| HighMemoryUsage  | Memory usage > 85%       | warning  | 5m       |
+| HostDown         | Target unreachable       | critical | 2m       |
+
+### Microsoft Teams Integration
+
+1. Create an **Incoming Webhook** connector in your Teams channel
+2. Copy the webhook URL
+3. Set it in your `.env` file:
+
+```
+TEAMS_WEBHOOK_URL=https://outlook.office.com/webhook/your-actual-url
+```
+
+4. Restart the stack:
+
+```bash
+docker compose restart alertmanager
+```
+
+Alerts will be sent to your Teams channel when triggered and when resolved.
+
+### Checking Alert Status
+
+- **Prometheus Alerts:** http://localhost:9090/alerts
+- **Alertmanager UI:** http://localhost:9093
 
 ## Architecture
 
